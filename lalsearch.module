@@ -15,3 +15,12 @@ function lalsearch_help($path, $arg) {
   return $output;
 } //function lalsearch_help
 ?>
+
+<?php
+/**
+* Valid permissions for this module
+* @return array An array of valid permissions for the lalsearch module
+*/
+function lalsearch_perm() {
+  return array('access LAL metadata content');
+} // function lalsearch_perm()
