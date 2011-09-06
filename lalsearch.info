@@ -1,0 +1,3 @@
+name = LAL Search
+description = Search into LAL metadata repository
+core = 6.x

@@ -1,0 +1,17 @@
+<?php
+/**
+ * Display help and module information
+ * @param path which path of the site we're displaying help
+ * @param arg array that holds the current path as would be returned from arg() function
+ * @return help text for the path
+ */
+function lalsearch_help($path, $arg) {
+  $output = '';
+  switch ($path) {
+    case "admin/help#lalsearch":
+      $output = '<p>'.  t("Searches into LAL metadata repository") .'</p>';
+      break;
+  }
+  return $output;
+} //function lalsearch_help
+?>
