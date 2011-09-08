@@ -47,3 +47,43 @@ function lalsearch_perm() {
   return array('accesss LAL metadata content');
 } // function lalsearch_perm()
 
+function lalsearch_admin() {
+  $form = array();
+  
+  $form['lalsearch_maxresults'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Maximum number of results'),
+    '#default_value' => variable_get('lalserach_maxresults', 20),
+    '#size' => 2,
+    '#maxlength' => 2,
+    '#description' => t('The maximum number of search results per page'),
+    '#required' => TRUE,
+  );
+  
+  return system_settings_form($form);
+}
+
+function lalsearch_menu() {
+  $items = array();
+	
+  $items['admin/settings/lalsearch'] = array(
+  	'title' => t('LAL search module settings'),
+  	'description' => t('LAL search module settings page'),
+  	'page callback' => 'drupal_get_form',
+  	'page arguments' => array('lalsearch_admin'),
+  	'access arguments' => array('access administration pages'),
+  	'type' => MENU_NORMAL_ITEM,
+  );
+  
+  return $items;
+}
+
+function lalsearch_admin_validate($form, &$form_state) {
+	$maxresults = $form_state['values']['lalsearch_maxresults'];
+	if (!is_numeric($maxresults)) {
+		form_set_error('lalsearch_maxresults',t('You must enter an integer for the maximum number of results'));
+	}
+	else if ($maxresults <= 0) {
+		form_set_error('lalsearch_maxresults', t('Maximum number of results must be positive'));
+	}
+}

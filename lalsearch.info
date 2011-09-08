@@ -1,4 +1,5 @@
 name = LAL Search
 description = "Search into LAL metadata repository."
 core = 6.x
+version = 0.0.1
 
