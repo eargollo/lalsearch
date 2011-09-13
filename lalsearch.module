@@ -1,10 +1,6 @@
 <?php
-/**
- * Display help and module information
- * @param path which path of the site we're displaying help
- * @param arg array that holds the current path as would be returned from arg() function
- * @return help text for the path
- */
+include('FeedParser.php'); 
+
 function lalsearch_help($path, $arg) {
   $output = '';
   switch ($path) {
@@ -13,39 +9,25 @@ function lalsearch_help($path, $arg) {
       break;
   }
   return $output;
-} //function lalsearch_help
+}
 
-/**
- * Implementation of hook_block().
- * @param string $op one of "list", "view", "save" and "configure"
- * @param integer $delta code to identify the block
- * @param array $edit only for "save" operation
-*/
 function lalsearch_block($op = 'list', $delta = 0) {  
   $block = array();
   if ($op == "list") {
-    // Generate listing of blocks from this module, for the admin/block page
-#    $block = array();
     $block[0]['info'] = t('LAL Search');
     return $block;
   } 
   else if ($op == "view") {
-    //Fake content
-    $block_content = "First<br />Second<br />Third<br />";
     $block['subject'] = "Search results";
-    $block['content'] = $block_content;
+    $block['content'] = lalsearch_side_search();
     return $block;
   }
   return $block;
-} // function lalsearch_block
+} 
 
-/**
-* Valid permissions for this module
-* @return array An array of valid permissions for the lalsearch module
-*/
 function lalsearch_perm() {
   return array('accesss LAL metadata content');
-} // function lalsearch_perm()
+} 
 
 function lalsearch_admin() {
   $form = array();
@@ -57,6 +39,16 @@ function lalsearch_admin() {
     '#size' => 2,
     '#maxlength' => 2,
     '#description' => t('The maximum number of search results per page'),
+    '#required' => TRUE,
+  );
+  
+  $form['lalsearch_server'] = array(
+    '#type' => 'textfield',
+    '#title' => t('LAL server'),
+    '#default_value' => variable_get('lalsearch_server', 'localhost'),
+    '#size' => 40,
+    '#maxlength' => 256,
+    '#description' => t('The server name or IP address for LAL engine'),
     '#required' => TRUE,
   );
   
@@ -75,6 +67,13 @@ function lalsearch_menu() {
   	'type' => MENU_NORMAL_ITEM,
   );
   
+  $items['lalsearch'] = array(
+  	'title' => 'LAL search',
+  	'page callback' => 'lalsearch_lal_searchpage',
+  	'access arguments' => array('accesss LAL metadata content'),
+  	'type' => MENU_CALLBACK,
+  );
+  
   return $items;
 }
 
@@ -87,3 +86,50 @@ function lalsearch_admin_validate($form, &$form_state) {
 		form_set_error('lalsearch_maxresults', t('Maximum number of results must be positive'));
 	}
 }
+
+
+function lalsearch_lal_searchpage() {
+	$page_data = '';
+	$search = $_GET['search'];
+	if ($search) {
+		$page_data .= '<h3>Results for query "'. $_GET['search'] .'": </h3>';
+		$server = variable_get('lalsearch_server','localhost');
+		$page_data .= "server = " . $server . "</br>";		
+		$query['query'] = array( 'q' => $search );
+		$url = url('http://' . $server . '/content/kepler/index.documents.atom', $query);
+		$page_data .= $url . '</br>';
+		$atom_parser = new FeedParser();
+		$atom_parser->parse($url);
+		#$channels = $atom_parser->getChannels();
+		$items = $atom_parser->getItems();
+		foreach($items as $item):
+			$page_data .= '<p>' . $item['TITLE'] . '</p>';
+		endforeach;
+	} else {
+		$page_data = '<p>No search made</p>';
+	}
+	return $page_data;
+}
+
+function lalsearch_side_search() {
+	return drupal_get_form('lalsearch_side_search_form');
+}
+
+function lalsearch_side_search_form() {
+	$form['search'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Enter search string'),
+	);
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('Search'),
+	);
+	return $form;
+}
+
+function lalsearch_side_search_form_submit($form_id, &$form_values) {
+#	$message = 'You have submitted the ' . $form_id . ' with the data: ' . print_r($form_values, true) . '</pre>';
+#	drupal_set_message(t($message));
+	$form_values['redirect'] = array('lalsearch', 'search=' . $form_values['values']['search']);
+}
+
